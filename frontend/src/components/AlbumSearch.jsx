@@ -87,7 +87,7 @@ export function AlbumSearch({ onSelectAlbum }) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onSelectAlbum(album.mbid)}
-                className="w-full p-4 bg-dark-surface rounded-lg border border-white/10 hover:border-white/20 text-left flex items-center gap-4 transition-all"
+                className="w-full p-4 bg-dark-surface backdrop-blur-md rounded-lg border border-white/10 hover:border-white/20 text-left flex items-center gap-4 transition-all"
               >
                 {album.cover_url && (
                   <img

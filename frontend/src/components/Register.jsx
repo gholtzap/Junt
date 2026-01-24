@@ -47,7 +47,7 @@ export const Register = ({ onSwitchToLogin }) => {
           </p>
         </div>
 
-        <div className="bg-dark-surface rounded-lg p-8 shadow-lg">
+        <div className="bg-dark-surface backdrop-blur-md rounded-lg p-8 shadow-lg">
           <h2 className="text-2xl font-bold text-dark-text mb-6">Sign Up</h2>
 
           {error && (

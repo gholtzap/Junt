@@ -9,9 +9,13 @@ export default {
       colors: {
         dark: {
           base: '#0a0a0a',
-          surface: '#141414',
+          surface: 'rgba(20, 20, 20, 0.4)',
+          'surface-solid': '#141414',
           border: 'rgba(255, 255, 255, 0.1)',
         }
+      },
+      backdropBlur: {
+        xs: '2px',
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],

@@ -58,7 +58,7 @@ export function DurationSelect({ onSelect, trackCount }) {
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onSelect(preset.id)}
-              className="p-8 bg-dark-surface rounded-lg border border-white/10 hover:border-white/30 transition-all text-left"
+              className="p-8 bg-dark-surface backdrop-blur-md rounded-lg border border-white/10 hover:border-white/30 transition-all text-left"
             >
               <div className="text-3xl font-bold mb-2 accent-color">
                 {preset.name}

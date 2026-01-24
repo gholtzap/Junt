@@ -12,3 +12,5 @@ services:
         sync: false
       - key: SECRET_KEY
         sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://junt.fun,https://www.junt.fun,http://localhost:5173,http://localhost:3000

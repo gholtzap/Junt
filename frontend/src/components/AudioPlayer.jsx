@@ -165,7 +165,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-xl p-8 max-w-md w-full text-center"
+              className="bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-md border border-white/10 rounded-xl p-8 max-w-md w-full text-center"
             >
               <div className="text-6xl mb-4">🎵</div>
               <h3 className="text-3xl font-bold mb-4">Want More?</h3>
