@@ -4,14 +4,14 @@ export function TrackProgress({ trackStatus }) {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'complete':
-        return '✓';
+        return 'OK';
       case 'failed':
-        return '×';
+        return 'X';
       case 'downloading':
       case 'analyzing':
-        return '◌';
+        return 'O';
       default:
-        return '·';
+        return '-';
     }
   };
 

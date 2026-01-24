@@ -84,7 +84,6 @@ export function Library({ onSelectMontage, onBack }) {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
           >
-            <div className="text-6xl mb-4">🎵</div>
             <h2 className="text-2xl font-semibold mb-2 text-gray-400">
               No saved junts yet
             </h2>
@@ -117,8 +116,8 @@ export function Library({ onSelectMontage, onBack }) {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-4xl text-gray-600">
-                      🎵
+                    <div className="w-full h-full flex items-center justify-center text-sm text-gray-600">
+                      No Cover
                     </div>
                   )}
 

@@ -99,9 +99,6 @@ class JobManager:
                 output_filename
             )
 
-            if not audio_path:
-                raise Exception("Failed to download track")
-
             # Analyze for peak energy
             track_status.status = "analyzing"
             await self._notify_callbacks(job_id, "progress", {

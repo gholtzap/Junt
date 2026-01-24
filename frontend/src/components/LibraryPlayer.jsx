@@ -45,8 +45,8 @@ export function LibraryPlayer({ montage, onBack, onDelete }) {
               transition={{ duration: 0.5 }}
             />
           ) : (
-            <div className="w-64 h-64 rounded-lg bg-white/5 backdrop-blur-md mx-auto mb-6 flex items-center justify-center text-6xl">
-              🎵
+            <div className="w-64 h-64 rounded-lg bg-white/5 backdrop-blur-md mx-auto mb-6 flex items-center justify-center text-sm text-gray-600">
+              No Cover
             </div>
           )}
 

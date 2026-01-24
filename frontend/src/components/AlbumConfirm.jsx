@@ -35,7 +35,6 @@ export function AlbumConfirm({ mbid, onConfirm, onBack }) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2">Error Loading Album</h2>
           <p className="text-red-400 mb-6">{error || 'Album not found'}</p>
           <motion.button

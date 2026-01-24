@@ -159,7 +159,7 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
                     : 'bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20'
                 }`}
               >
-                {isSaving ? 'Saving...' : isSaved ? 'Saved ✓' : 'Save to Library'}
+                {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save to Library'}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}

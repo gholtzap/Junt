@@ -1,6 +1,9 @@
 import yt_dlp
 import os
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class DownloaderService:
@@ -8,7 +11,7 @@ class DownloaderService:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
 
-    async def download_track(self, artist: str, track_name: str, output_filename: str) -> Optional[str]:
+    async def download_track(self, artist: str, track_name: str, output_filename: str) -> str:
         """
         Download a track from YouTube.
 
@@ -18,7 +21,10 @@ class DownloaderService:
             output_filename: Output filename (without extension)
 
         Returns:
-            Path to downloaded file or None if failed
+            Path to downloaded file
+
+        Raises:
+            Exception: If download fails
         """
         search_query = f"{artist} {track_name} audio"
         output_path = os.path.join(self.output_dir, output_filename)
@@ -31,35 +37,36 @@ class DownloaderService:
                 'preferredquality': '192',
             }],
             'outtmpl': output_path,
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,
+            'no_warnings': False,
             'extract_flat': False,
             'default_search': 'ytsearch1',
             'nocheckcertificate': True,
+            'verbose': True,
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                # Search and download the first result
                 info = ydl.extract_info(f"ytsearch1:{search_query}", download=True)
 
                 if info and 'entries' in info and len(info['entries']) > 0:
-                    # yt-dlp adds .mp3 extension automatically
                     final_path = f"{output_path}.mp3"
 
                     if os.path.exists(final_path):
-                        print(f"Downloaded: {search_query} -> {final_path}")
+                        logger.info(f"Downloaded: {search_query} -> {final_path}")
                         return final_path
                     else:
-                        print(f"File not found after download: {final_path}")
-                        return None
+                        error_msg = f"File not found after download: {final_path}"
+                        logger.error(error_msg)
+                        raise Exception(error_msg)
                 else:
-                    print(f"No results found for: {search_query}")
-                    return None
+                    error_msg = f"No results found for: {search_query}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
 
         except Exception as e:
-            print(f"Error downloading {search_query}: {e}")
-            return None
+            logger.error(f"Error downloading {search_query}: {str(e)}", exc_info=True)
+            raise
 
     def cleanup(self, file_path: str):
         """Remove a temporary file."""

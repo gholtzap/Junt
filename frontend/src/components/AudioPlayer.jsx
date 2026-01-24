@@ -93,7 +93,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
             className="p-3 bg-orange-500/10 backdrop-blur-md border border-orange-500/30 rounded-lg text-center"
           >
             <div className="text-sm text-orange-400 font-medium">
-              🎵 Trial Mode: First {ANONYMOUS_LIMIT} seconds free
+              Trial Mode: First {ANONYMOUS_LIMIT} seconds free
             </div>
             <div className="text-xs text-gray-400 mt-1">
               Sign up to hear the full junt
@@ -113,7 +113,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
               : 'accent-bg text-white hover:opacity-90'
           }`}
         >
-          {hitLimit ? '🔒 Preview Complete' : isPlaying ? '⏸ Pause' : '▶ Play Montage'}
+          {hitLimit ? 'Preview Complete' : isPlaying ? 'Pause' : 'Play Montage'}
         </motion.button>
 
         {/* Progress bar */}
@@ -167,7 +167,6 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
               onClick={(e) => e.stopPropagation()}
               className="bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-md border border-white/10 rounded-xl p-8 max-w-md w-full text-center"
             >
-              <div className="text-6xl mb-4">🎵</div>
               <h3 className="text-3xl font-bold mb-4">Want More?</h3>
               <p className="text-gray-300 mb-6">
                 You've heard the first {ANONYMOUS_LIMIT} seconds. Sign up for free to hear the full junt and create unlimited montages!
