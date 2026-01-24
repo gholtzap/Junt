@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, Callable, Tuple
 from datetime import datetime
 from api.schemas import JobStatus, TrackStatus, DurationType, AlbumDetail
 from services.metadata import MetadataService
@@ -66,6 +66,88 @@ class JobManager:
                 except Exception as e:
                     print(f"Error notifying callback: {e}")
 
+    async def _process_single_track(
+        self,
+        job_id: str,
+        track: object,
+        track_index: int,
+        album: AlbumDetail,
+        clip_duration: float
+    ) -> Tuple[int, Optional[str], Optional[str]]:
+        """
+        Process a single track: download, analyze, extract, and normalize.
+
+        Returns:
+            Tuple of (track_number, clip_path, error_message)
+            If successful, error_message is None
+        """
+        job = self.jobs[job_id]
+        track_status = job.track_statuses[track_index]
+
+        try:
+            # Download track
+            track_status.status = "downloading"
+            await self._notify_callbacks(job_id, "progress", {
+                "current_track": track.number,
+                "track_status": track_status.dict()
+            })
+
+            output_filename = f"{job_id}_track_{track.number}"
+            audio_path = await self.downloader.download_track(
+                album.artist,
+                track.title,
+                output_filename
+            )
+
+            if not audio_path:
+                raise Exception("Failed to download track")
+
+            # Analyze for peak energy
+            track_status.status = "analyzing"
+            await self._notify_callbacks(job_id, "progress", {
+                "current_track": track.number,
+                "track_status": track_status.dict()
+            })
+
+            start_time, end_time = await self.analyzer.find_peak_energy_window(
+                audio_path,
+                clip_duration
+            )
+
+            # Extract clip
+            clip_path = f"temp/{job_id}_clip_{track.number}.mp3"
+            await self.processor.extract_clip(
+                audio_path,
+                start_time,
+                end_time,
+                clip_path
+            )
+
+            # Normalize
+            await self.processor.normalize_audio(clip_path)
+
+            # Mark as complete
+            track_status.status = "complete"
+
+            # Cleanup downloaded file
+            self.downloader.cleanup(audio_path)
+
+            print(f"Track {track.number} processed successfully")
+            return (track.number, clip_path, None)
+
+        except Exception as e:
+            error_msg = str(e)
+            track_status.status = "failed"
+            track_status.error = error_msg
+
+            await self._notify_callbacks(job_id, "error", {
+                "track_number": track.number,
+                "error": error_msg
+            })
+
+            print(f"Error processing track {track.number}: {e}")
+            return (track.number, None, error_msg)
+
     async def _process_job(self, job_id: str, mbid: str, duration: DurationType):
         """Process a montage creation job."""
         job = self.jobs[job_id]
@@ -101,79 +183,71 @@ class JobManager:
 
             # Progressive montage settings
             PARTIAL_READY_THRESHOLD = 3  # Start playback after this many tracks
+            BATCH_SIZE = 3  # Process this many tracks in parallel
             output_path = f"temp/{job_id}_montage.mp3"
             partial_ready_sent = False
 
-            # Process each track
-            clip_paths = []
-            for i, track in enumerate(album.tracks):
-                job.current_track = track.number
-                track_status = job.track_statuses[i]
+            # Track clips by number to maintain order
+            clips_by_track_number = {}
 
-                try:
-                    # Download track
-                    track_status.status = "downloading"
-                    await self._notify_callbacks(job_id, "progress", {
-                        "current_track": track.number,
-                        "track_status": track_status.dict()
-                    })
+            # Process tracks in parallel batches
+            for batch_start in range(0, len(album.tracks), BATCH_SIZE):
+                batch_end = min(batch_start + BATCH_SIZE, len(album.tracks))
+                batch_tracks = album.tracks[batch_start:batch_end]
 
-                    output_filename = f"{job_id}_track_{track.number}"
-                    audio_path = await self.downloader.download_track(
-                        album.artist,
-                        track.title,
-                        output_filename
-                    )
-
-                    if not audio_path:
-                        raise Exception("Failed to download track")
-
-                    # Analyze for peak energy
-                    track_status.status = "analyzing"
-                    await self._notify_callbacks(job_id, "progress", {
-                        "current_track": track.number,
-                        "track_status": track_status.dict()
-                    })
-
-                    start_time, end_time = await self.analyzer.find_peak_energy_window(
-                        audio_path,
+                # Process this batch in parallel
+                batch_tasks = [
+                    self._process_single_track(
+                        job_id,
+                        track,
+                        batch_start + i,
+                        album,
                         clip_duration
                     )
+                    for i, track in enumerate(batch_tracks)
+                ]
 
-                    # Extract clip
-                    clip_path = f"temp/{job_id}_clip_{track.number}.mp3"
-                    await self.processor.extract_clip(
-                        audio_path,
-                        start_time,
-                        end_time,
-                        clip_path
-                    )
+                # Wait for all tracks in this batch to complete
+                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
-                    # Normalize
-                    await self.processor.normalize_audio(clip_path)
+                # Process results
+                for result in batch_results:
+                    if isinstance(result, Exception):
+                        print(f"Batch task failed with exception: {result}")
+                        continue
 
-                    clip_paths.append(clip_path)
+                    track_number, clip_path, error_msg = result
 
-                    # Mark as complete
-                    track_status.status = "complete"
-                    job.completed_tracks += 1
-                    job.progress = job.completed_tracks / job.total_tracks
+                    if error_msg:
+                        # Error already logged in _process_single_track
+                        job.errors.append(f"Track {track_number}: {error_msg}")
+                    else:
+                        # Successfully processed
+                        clips_by_track_number[track_number] = clip_path
+                        job.completed_tracks += 1
+                        job.progress = job.completed_tracks / job.total_tracks
 
-                    # Cleanup downloaded file
-                    self.downloader.cleanup(audio_path)
+                        # Find track info for notification
+                        track_info = next((t for t in album.tracks if t.number == track_number), None)
 
-                    await self._notify_callbacks(job_id, "track_complete", {
-                        "track_number": track.number,
-                        "track_title": track.title,
-                        "completed": job.completed_tracks,
-                        "total": job.total_tracks,
-                        "progress": job.progress
-                    })
+                        await self._notify_callbacks(job_id, "track_complete", {
+                            "track_number": track_number,
+                            "track_title": track_info.title if track_info else f"Track {track_number}",
+                            "completed": job.completed_tracks,
+                            "total": job.total_tracks,
+                            "progress": job.progress
+                        })
+
+                # After each batch, update progressive montage with all completed clips
+                if clips_by_track_number:
+                    # Sort clips by track number to maintain album order
+                    sorted_track_numbers = sorted(clips_by_track_number.keys())
+                    sorted_clip_paths = [clips_by_track_number[num] for num in sorted_track_numbers]
 
                     # Progressive montage: Create/update montage after threshold reached
-                    if len(clip_paths) >= PARTIAL_READY_THRESHOLD:
+                    if len(sorted_clip_paths) >= PARTIAL_READY_THRESHOLD:
                         await self.processor.create_progressive_montage(
-                            clip_paths,
+                            sorted_clip_paths,
                             output_path,
                             crossfade_duration
                         )
@@ -183,29 +257,20 @@ class JobManager:
                             job.file_path = output_path
                             await self._notify_callbacks(job_id, "partial_ready", {
                                 "file_path": output_path,
-                                "tracks_ready": len(clip_paths),
+                                "tracks_ready": len(sorted_clip_paths),
                                 "total_tracks": job.total_tracks,
-                                "message": f"First {len(clip_paths)} tracks ready! More tracks are being added..."
+                                "message": f"First {len(sorted_clip_paths)} tracks ready! More tracks are being added..."
                             })
                             partial_ready_sent = True
-                            print(f"Partial montage ready: {len(clip_paths)}/{job.total_tracks} tracks")
-
-                except Exception as e:
-                    error_msg = str(e)
-                    track_status.status = "failed"
-                    track_status.error = error_msg
-                    job.errors.append(f"Track {track.number} ({track.title}): {error_msg}")
-
-                    await self._notify_callbacks(job_id, "error", {
-                        "track_number": track.number,
-                        "error": error_msg
-                    })
-
-                    print(f"Error processing track {track.number}: {e}")
+                            print(f"Partial montage ready: {len(sorted_clip_paths)}/{job.total_tracks} tracks")
 
             # Check if we have any clips
-            if not clip_paths:
+            if not clips_by_track_number:
                 raise Exception("All tracks failed to process")
+
+            # Get final sorted clip paths
+            sorted_track_numbers = sorted(clips_by_track_number.keys())
+            clip_paths = [clips_by_track_number[num] for num in sorted_track_numbers]
 
             # Create final montage (if we haven't created one yet, or to ensure final version)
             await self.processor.create_montage(
