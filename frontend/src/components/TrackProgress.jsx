@@ -34,7 +34,7 @@ export function TrackProgress({ trackStatus }) {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`flex items-center gap-3 py-2 px-4 rounded border border-white/5 ${getStatusColor(trackStatus.status)}`}
+      className={`flex items-center gap-3 py-2 px-4 rounded bg-white/5 backdrop-blur-sm border border-white/10 ${getStatusColor(trackStatus.status)}`}
     >
       <span className="text-lg font-mono w-6 text-center">
         {getStatusIcon(trackStatus.status)}

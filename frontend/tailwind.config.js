@@ -8,9 +8,8 @@ export default {
     extend: {
       colors: {
         dark: {
-          base: '#0a0a0a',
+          base: 'rgba(10, 10, 10, 0.3)',
           surface: 'rgba(20, 20, 20, 0.4)',
-          'surface-solid': '#141414',
           border: 'rgba(255, 255, 255, 0.1)',
         }
       },

@@ -45,7 +45,7 @@ export function LibraryPlayer({ montage, onBack, onDelete }) {
               transition={{ duration: 0.5 }}
             />
           ) : (
-            <div className="w-64 h-64 rounded-lg bg-white/5 mx-auto mb-6 flex items-center justify-center text-6xl">
+            <div className="w-64 h-64 rounded-lg bg-white/5 backdrop-blur-md mx-auto mb-6 flex items-center justify-center text-6xl">
               🎵
             </div>
           )}
@@ -87,7 +87,7 @@ export function LibraryPlayer({ montage, onBack, onDelete }) {
             whileTap={{ scale: 0.95 }}
             href={api.getLibraryStreamUrl(montage.id)}
             download={`${montage.album.artist} - ${montage.album.title}.mp3`}
-            className="px-8 py-4 rounded-lg border border-white/10 hover:border-white/20 transition-colors inline-block"
+            className="px-8 py-4 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors inline-block"
           >
             Download
           </motion.a>
@@ -95,7 +95,7 @@ export function LibraryPlayer({ montage, onBack, onDelete }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleDelete}
-            className="px-8 py-4 rounded-lg border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 transition-colors"
+            className="px-8 py-4 rounded-lg bg-red-500/10 backdrop-blur-md border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300 transition-colors"
           >
             Delete
           </motion.button>

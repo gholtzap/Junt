@@ -69,7 +69,7 @@ export function AlbumSearch({ onSelectAlbum }) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+            className="mt-4 p-4 bg-red-500/10 backdrop-blur-md border border-red-500/20 rounded-lg text-red-400"
           >
             {error}
           </motion.div>

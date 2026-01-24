@@ -56,7 +56,7 @@ export function Library({ onSelectMontage, onBack }) {
           <p className="text-red-400 mb-4">{error}</p>
           <button
             onClick={loadLibrary}
-            className="px-6 py-3 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+            className="px-6 py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
           >
             Try Again
           </button>
@@ -72,7 +72,7 @@ export function Library({ onSelectMontage, onBack }) {
           <h1 className="text-4xl font-bold tracking-tight">My Library</h1>
           <button
             onClick={onBack}
-            className="px-6 py-3 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+            className="px-6 py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
           >
             Back to Search
           </button>
@@ -109,7 +109,7 @@ export function Library({ onSelectMontage, onBack }) {
                 onClick={() => onSelectMontage(montage)}
                 className="group cursor-pointer"
               >
-                <div className="relative aspect-square mb-3 rounded-lg overflow-hidden bg-white/5">
+                <div className="relative aspect-square mb-3 rounded-lg overflow-hidden bg-white/5 backdrop-blur-sm">
                   {montage.album.cover_url ? (
                     <img
                       src={montage.album.cover_url}
@@ -123,8 +123,8 @@ export function Library({ onSelectMontage, onBack }) {
                   )}
 
                   {/* Play overlay */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
                       <svg
                         className="w-8 h-8 text-white ml-1"
                         fill="currentColor"
@@ -138,7 +138,7 @@ export function Library({ onSelectMontage, onBack }) {
                   {/* Delete button */}
                   <button
                     onClick={(e) => handleDelete(montage.id, e)}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/80 hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/60 backdrop-blur-md hover:bg-red-500/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                   >
                     <svg
                       className="w-4 h-4 text-white"

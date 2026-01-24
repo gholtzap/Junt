@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../lib/api';
-import { useColorExtract } from '../hooks/useColorExtract';
 import { LoadingScreen } from './LoadingScreen';
 
 export function AlbumConfirm({ mbid, onConfirm, onBack }) {
   const [album, setAlbum] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const colors = useColorExtract(album?.cover_url);
 
   useEffect(() => {
     loadAlbum();
@@ -45,7 +42,7 @@ export function AlbumConfirm({ mbid, onConfirm, onBack }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="px-6 py-3 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+            className="px-6 py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
           >
             ← Back to Search
           </motion.button>
@@ -118,7 +115,7 @@ export function AlbumConfirm({ mbid, onConfirm, onBack }) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onBack}
-                className="px-6 py-3 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+                className="px-6 py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
               >
                 Back
               </motion.button>

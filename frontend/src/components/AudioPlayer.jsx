@@ -90,7 +90,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg text-center"
+            className="p-3 bg-orange-500/10 backdrop-blur-md border border-orange-500/30 rounded-lg text-center"
           >
             <div className="text-sm text-orange-400 font-medium">
               🎵 Trial Mode: First {ANONYMOUS_LIMIT} seconds free
@@ -109,7 +109,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
           disabled={hitLimit}
           className={`w-full py-4 rounded-lg font-semibold text-lg transition-opacity ${
             hitLimit
-              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              ? 'bg-gray-600/30 backdrop-blur-md text-gray-400 cursor-not-allowed'
               : 'accent-bg text-white hover:opacity-90'
           }`}
         >
@@ -187,7 +187,7 @@ export function AudioPlayer({ audioUrl, onUpgradeClick }) {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowUpgradePrompt(false)}
-                  className="w-full py-3 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                  className="w-full py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
                 >
                   Close
                 </motion.button>

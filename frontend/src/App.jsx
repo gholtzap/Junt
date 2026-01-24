@@ -109,7 +109,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-base">
+    <div className="min-h-screen">
       {/* Animated background */}
       <LiquidEther
         mouseForce={20}
@@ -137,7 +137,7 @@ function AppContent() {
                 setAuthScreen('login');
                 setScreen('auth');
               }}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
             >
               Login
             </button>
@@ -153,18 +153,18 @@ function AppContent() {
           </>
         ) : (
           <>
-            <div className="text-dark-text-secondary text-sm">
+            <div className="text-gray-400 text-sm">
               Welcome, {user.username}
             </div>
             <button
               onClick={handleGoToLibrary}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
             >
               My Library
             </button>
             <button
               onClick={logout}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
             >
               Logout
             </button>

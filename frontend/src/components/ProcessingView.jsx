@@ -121,7 +121,7 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg"
+                className="mt-4 p-3 bg-blue-500/10 backdrop-blur-md border border-blue-500/20 rounded-lg"
               >
                 <div className="flex items-center justify-center gap-2 text-blue-400">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
@@ -155,8 +155,8 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
                 disabled={isSaving || isSaved}
                 className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all ${
                   isSaved
-                    ? 'bg-green-500/20 border border-green-500/50 text-green-400 cursor-default'
-                    : 'border border-white/10 hover:border-white/20'
+                    ? 'bg-green-500/20 backdrop-blur-md border border-green-500/50 text-green-400 cursor-default'
+                    : 'bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20'
                 }`}
               >
                 {isSaving ? 'Saving...' : isSaved ? 'Saved ✓' : 'Save to Library'}
@@ -165,7 +165,7 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onReset}
-                className="px-8 py-4 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+                className="px-8 py-4 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
               >
                 Create Another Junt
               </motion.button>
@@ -180,7 +180,7 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-left"
+              className="mt-8 p-4 bg-yellow-500/10 backdrop-blur-md border border-yellow-500/20 rounded-lg text-left"
             >
               <div className="font-semibold text-yellow-400 mb-2">
                 Some tracks were skipped:

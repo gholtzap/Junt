@@ -13,9 +13,16 @@ database = None
 
 async def connect_to_mongo():
     global client, database
-    client = AsyncIOMotorClient(MONGODB_URI)
-    database = client[DATABASE_NAME]
-    print(f"Connected to MongoDB database: {DATABASE_NAME}")
+    try:
+        if not MONGODB_URI:
+            raise ValueError("MONGODB_URI environment variable is not set")
+        client = AsyncIOMotorClient(MONGODB_URI)
+        await client.admin.command('ping')
+        database = client[DATABASE_NAME]
+        print(f"Connected to MongoDB database: {DATABASE_NAME}")
+    except Exception as e:
+        print(f"Failed to connect to MongoDB: {e}")
+        raise
 
 
 async def close_mongo_connection():
