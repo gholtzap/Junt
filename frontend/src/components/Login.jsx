@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import LiquidEther from './LiquidEther';
 
-export const Login = ({ onSwitchToRegister }) => {
+export const Login = ({ onSwitchToRegister, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -39,6 +39,14 @@ export const Login = ({ onSwitchToRegister }) => {
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
       />
       <div className="max-w-md w-full" style={{ position: 'relative', zIndex: 10 }}>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="mb-4 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg hover:border-white/30 transition-colors text-gray-400 hover:text-white"
+          >
+            ← Back
+          </button>
+        )}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">
             Junt

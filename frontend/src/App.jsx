@@ -31,9 +31,9 @@ function AppContent() {
   // Show auth screen if explicitly navigated to it
   if (screen === 'auth') {
     if (authScreen === 'login') {
-      return <Login onSwitchToRegister={() => setAuthScreen('register')} />;
+      return <Login onSwitchToRegister={() => setAuthScreen('register')} onBack={() => setScreen('search')} />;
     }
-    return <Register onSwitchToLogin={() => setAuthScreen('login')} />;
+    return <Register onSwitchToLogin={() => setAuthScreen('login')} onBack={() => setScreen('search')} />;
   }
 
   const handleSelectAlbum = async (mbid) => {
@@ -190,6 +190,7 @@ function AppContent() {
           <DurationSelect
             onSelect={handleSelectDuration}
             trackCount={albumData?.tracks?.length || 10}
+            onBack={() => setScreen('confirm')}
           />
         )}
 

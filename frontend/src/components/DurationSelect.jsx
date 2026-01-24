@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-export function DurationSelect({ onSelect, trackCount }) {
+export function DurationSelect({ onSelect, trackCount, onBack }) {
   const presets = [
     {
       id: 'short',
@@ -40,6 +40,14 @@ export function DurationSelect({ onSelect, trackCount }) {
         className="w-full max-w-4xl"
       >
         <div className="text-center mb-12">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="mb-6 px-6 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-lg hover:border-white/30 transition-colors text-gray-400 hover:text-white"
+            >
+              ← Back
+            </button>
+          )}
           <h2 className="text-4xl font-bold mb-4 tracking-tight">
             Choose Duration
           </h2>
