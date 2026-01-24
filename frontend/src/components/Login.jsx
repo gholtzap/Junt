@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import LiquidEther from './LiquidEther';
 
-export const Login = ({ onSwitchToRegister, onBack }) => {
+export const Login = ({ onSwitchToRegister, onBack, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,6 +16,9 @@ export const Login = ({ onSwitchToRegister, onBack }) => {
 
     try {
       await login(email, password);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {

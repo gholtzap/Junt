@@ -31,9 +31,9 @@ function AppContent() {
   // Show auth screen if explicitly navigated to it
   if (screen === 'auth') {
     if (authScreen === 'login') {
-      return <Login onSwitchToRegister={() => setAuthScreen('register')} onBack={() => setScreen('search')} />;
+      return <Login onSwitchToRegister={() => setAuthScreen('register')} onBack={() => setScreen('search')} onSuccess={() => setScreen('search')} />;
     }
-    return <Register onSwitchToLogin={() => setAuthScreen('login')} onBack={() => setScreen('search')} />;
+    return <Register onSwitchToLogin={() => setAuthScreen('login')} onBack={() => setScreen('search')} onSuccess={() => setScreen('search')} />;
   }
 
   const handleSelectAlbum = async (mbid) => {
@@ -129,9 +129,6 @@ function AppContent() {
       <div className="fixed top-4 right-4 flex items-center gap-4" style={{ zIndex: 100 }}>
         {isAnonymous ? (
           <>
-            <div className="text-orange-400 text-sm font-medium">
-              🎵 Trial Mode
-            </div>
             <button
               onClick={() => {
                 setAuthScreen('login');

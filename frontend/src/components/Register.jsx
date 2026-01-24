@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import LiquidEther from './LiquidEther';
 
-export const Register = ({ onSwitchToLogin, onBack }) => {
+export const Register = ({ onSwitchToLogin, onBack, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,6 +29,9 @@ export const Register = ({ onSwitchToLogin, onBack }) => {
 
     try {
       await register(email, username, password);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Email or username may already be in use.');
     } finally {
