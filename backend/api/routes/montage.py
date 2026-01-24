@@ -1,22 +1,76 @@
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from fastapi.responses import FileResponse
 from api.schemas import MontageCreateRequest, MontageCreateResponse, JobStatus
 from services.jobs import job_manager
-from api.dependencies import get_current_user
+from api.dependencies import get_current_user_optional
+from services.anonymous import AnonymousTracker
+from config.database import get_database
 import os
 
 router = APIRouter(prefix="/api/montage", tags=["montage"])
 
 
+@router.get("/anonymous-status")
+async def get_anonymous_status(
+    request: Request,
+    session_id: Optional[str] = Header(None, alias="X-Session-ID")
+):
+    """Check anonymous user limits before creating a montage."""
+    db = get_database()
+    tracker = AnonymousTracker(db)
+
+    usage_info = await tracker.get_usage_info(request, session_id)
+
+    return usage_info
+
+
 @router.post("/create", response_model=MontageCreateResponse)
 async def create_montage(
-    request: MontageCreateRequest,
-    current_user: dict = Depends(get_current_user)
+    montage_request: MontageCreateRequest,
+    request: Request,
+    current_user: Optional[dict] = Depends(get_current_user_optional),
+    session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
-    """Start a new montage creation job."""
-    job_id = job_manager.create_job(request.mbid, request.duration)
+    """
+    Start a new montage creation job.
 
-    return MontageCreateResponse(job_id=job_id)
+    Authenticated users: Unlimited montages
+    Anonymous users: 1 montage per 24 hours (tracked by IP, fingerprint, and session)
+    """
+    # If user is authenticated, allow unlimited creation
+    if current_user:
+        job_id = job_manager.create_job(montage_request.mbid, montage_request.duration)
+        return MontageCreateResponse(job_id=job_id)
+
+    # Anonymous user - check limits
+    db = get_database()
+    tracker = AnonymousTracker(db)
+
+    allowed, session_id, usage_info = await tracker.check_limit(request, session_id)
+
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": "Anonymous limit reached. Sign up to create unlimited montages!",
+                "usage": usage_info,
+                "session_id": session_id
+            }
+        )
+
+    # Create the job
+    job_id = job_manager.create_job(montage_request.mbid, montage_request.duration)
+
+    # Record anonymous usage
+    await tracker.record_usage(request, session_id)
+
+    return MontageCreateResponse(
+        job_id=job_id,
+        session_id=session_id,
+        is_anonymous=True,
+        usage_info=usage_info
+    )
 
 
 @router.get("/{job_id}/status", response_model=JobStatus)

@@ -15,18 +15,21 @@ import { api } from './lib/api';
 function AppContent() {
   const { user, loading, logout } = useAuth();
   const [authScreen, setAuthScreen] = useState('login'); // login, register
-  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player
+  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player, auth
   const [selectedMbid, setSelectedMbid] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [durationType, setDurationType] = useState(null);
   const [selectedLibraryMontage, setSelectedLibraryMontage] = useState(null);
 
+  const isAnonymous = !user;
+
   if (loading) {
     return <LoadingScreen message="Loading..." />;
   }
 
-  if (!user) {
+  // Show auth screen if explicitly navigated to it
+  if (screen === 'auth') {
     if (authScreen === 'login') {
       return <Login onSwitchToRegister={() => setAuthScreen('register')} />;
     }
@@ -57,9 +60,25 @@ function AppContent() {
       setScreen('processing');
     } catch (error) {
       console.error('Failed to create montage:', error);
-      alert('Failed to start montage creation. Please try again.');
-      setScreen('duration'); // Go back to duration selection on error
+
+      // Handle rate limit for anonymous users
+      if (error.status === 429) {
+        if (confirm(error.message + '\n\nWould you like to sign up now?')) {
+          setAuthScreen('register');
+          setScreen('auth');
+        } else {
+          setScreen('search');
+        }
+      } else {
+        alert('Failed to start montage creation. Please try again.');
+        setScreen('duration'); // Go back to duration selection on error
+      }
     }
+  };
+
+  const handleUpgradeClick = () => {
+    setAuthScreen('register');
+    setScreen('auth');
   };
 
   const handleReset = () => {
@@ -108,21 +127,49 @@ function AppContent() {
 
       {/* User info and action buttons */}
       <div className="fixed top-4 right-4 flex items-center gap-4" style={{ zIndex: 100 }}>
-        <div className="text-dark-text-secondary text-sm">
-          Welcome, {user.username}
-        </div>
-        <button
-          onClick={handleGoToLibrary}
-          className="px-4 py-2 bg-dark-surface text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
-        >
-          My Library
-        </button>
-        <button
-          onClick={logout}
-          className="px-4 py-2 bg-dark-surface text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
-        >
-          Logout
-        </button>
+        {isAnonymous ? (
+          <>
+            <div className="text-orange-400 text-sm font-medium">
+              🎵 Trial Mode
+            </div>
+            <button
+              onClick={() => {
+                setAuthScreen('login');
+                setScreen('auth');
+              }}
+              className="px-4 py-2 bg-dark-surface text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => {
+                setAuthScreen('register');
+                setScreen('auth');
+              }}
+              className="px-4 py-2 accent-bg text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Sign Up Free
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="text-dark-text-secondary text-sm">
+              Welcome, {user.username}
+            </div>
+            <button
+              onClick={handleGoToLibrary}
+              className="px-4 py-2 bg-dark-surface text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+            >
+              My Library
+            </button>
+            <button
+              onClick={logout}
+              className="px-4 py-2 bg-dark-surface text-dark-text-secondary hover:text-dark-text border border-dark-border rounded-lg hover:border-spotify-green transition-colors"
+            >
+              Logout
+            </button>
+          </>
+        )}
       </div>
 
       {/* Main content */}
@@ -156,17 +203,18 @@ function AppContent() {
             albumData={albumData}
             durationType={durationType}
             onReset={handleReset}
+            onUpgradeClick={handleUpgradeClick}
           />
         )}
 
-        {screen === 'library' && (
+        {screen === 'library' && !isAnonymous && (
           <Library
             onSelectMontage={handleSelectLibraryMontage}
             onBack={() => setScreen('search')}
           />
         )}
 
-        {screen === 'library-player' && selectedLibraryMontage && (
+        {screen === 'library-player' && selectedLibraryMontage && !isAnonymous && (
           <LibraryPlayer
             montage={selectedLibraryMontage}
             onBack={handleBackToLibrary}

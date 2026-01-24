@@ -1,22 +1,52 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
+// Session management for anonymous users
+const getSessionId = () => {
+  let sessionId = localStorage.getItem('anonymous_session_id');
+  if (!sessionId) {
+    sessionId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('anonymous_session_id', sessionId);
+  }
+  return sessionId;
+};
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
-  return {
+  const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    // Include session ID for anonymous users
+    headers['X-Session-ID'] = getSessionId();
+  }
+
+  return headers;
 };
 
 const handleResponse = async (response) => {
+  // Handle 429 (rate limit) specially for anonymous users
+  if (response.status === 429) {
+    const data = await response.json();
+    throw {
+      status: 429,
+      message: data.detail?.message || 'Rate limit exceeded',
+      detail: data.detail
+    };
+  }
+
   if (response.status === 401) {
     localStorage.removeItem('token');
     window.location.href = '/';
     throw new Error('Unauthorized');
   }
+
   if (!response.ok) {
     throw new Error(`Request failed: ${response.statusText}`);
   }
+
   return response.json();
 };
 
@@ -62,13 +92,35 @@ export const api = {
     return response.json();
   },
 
+  async checkAnonymousStatus() {
+    const response = await fetch(`${API_BASE}/montage/anonymous-status`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to check anonymous status');
+    }
+    return response.json();
+  },
+
   async createMontage(mbid, duration) {
     const response = await fetch(`${API_BASE}/montage/create`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ mbid, duration }),
     });
-    return handleResponse(response);
+
+    const data = await handleResponse(response);
+
+    // Store session ID if provided (for anonymous users)
+    if (data.session_id) {
+      localStorage.setItem('anonymous_session_id', data.session_id);
+    }
+
+    return data;
+  },
+
+  isAnonymous() {
+    return !localStorage.getItem('token');
   },
 
   async getJobStatus(jobId) {

@@ -43,6 +43,9 @@ class MontageCreateRequest(BaseModel):
 
 class MontageCreateResponse(BaseModel):
     job_id: str
+    session_id: Optional[str] = None
+    is_anonymous: Optional[bool] = False
+    usage_info: Optional[dict] = None
 
 
 class TrackStatus(BaseModel):

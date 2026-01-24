@@ -7,8 +7,10 @@ export function useWebSocket(jobId, onMessage) {
   useEffect(() => {
     if (!jobId) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/progress/${jobId}`;
+    const wsBaseUrl = import.meta.env.VITE_WS_URL;
+    const wsUrl = wsBaseUrl
+      ? `${wsBaseUrl}/ws/progress/${jobId}`
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/progress/${jobId}`;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
