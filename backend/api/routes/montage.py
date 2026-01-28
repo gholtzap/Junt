@@ -1,11 +1,7 @@
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends, Request, Header
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from api.schemas import MontageCreateRequest, MontageCreateResponse, JobStatus
 from services.jobs import job_manager
-from api.dependencies import get_current_user_optional
-from services.anonymous import AnonymousTracker
-from config.database import get_database
 import os
 import logging
 
@@ -14,57 +10,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/montage", tags=["montage"])
 
 
-@router.get("/anonymous-status")
-async def get_anonymous_status(
-    request: Request,
-    session_id: Optional[str] = Header(None, alias="X-Session-ID")
-):
-    """Check anonymous user limits before creating a montage."""
-    db = get_database()
-    tracker = AnonymousTracker(db)
-
-    usage_info = await tracker.get_usage_info(request, session_id)
-
-    return usage_info
-
-
 @router.post("/create", response_model=MontageCreateResponse)
-async def create_montage(
-    montage_request: MontageCreateRequest,
-    request: Request,
-    current_user: Optional[dict] = Depends(get_current_user_optional),
-    session_id: Optional[str] = Header(None, alias="X-Session-ID")
-):
+async def create_montage(montage_request: MontageCreateRequest):
+    """Create a new montage job."""
     try:
-        if current_user:
-            job_id = job_manager.create_job(montage_request.mbid, montage_request.duration)
-            return MontageCreateResponse(job_id=job_id)
-
-        db = get_database()
-        tracker = AnonymousTracker(db)
-
-        allowed, session_id, usage_info = await tracker.check_limit(request, session_id)
-
-        if not allowed:
-            raise HTTPException(
-                status_code=429,
-                detail={
-                    "message": "Anonymous limit reached. Sign up to create unlimited montages!",
-                    "usage": usage_info,
-                    "session_id": session_id
-                }
-            )
-
         job_id = job_manager.create_job(montage_request.mbid, montage_request.duration)
-
-        await tracker.record_usage(request, session_id)
-
-        return MontageCreateResponse(
-            job_id=job_id,
-            session_id=session_id,
-            is_anonymous=True,
-            usage_info=usage_info
-        )
+        return MontageCreateResponse(job_id=job_id)
     except HTTPException:
         raise
     except Exception as e:

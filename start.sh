@@ -16,6 +16,19 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Function to prompt user for yes/no
+prompt_yes_no() {
+    local prompt_message="$1"
+    while true; do
+        read -p "$(echo -e ${YELLOW}${prompt_message}${NC}) (y/n): " yn
+        case $yn in
+            [Yy]* ) return 0;;
+            [Nn]* ) return 1;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+}
+
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  Album Previewer Full Stack - Starting Services${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
@@ -35,27 +48,53 @@ if ! command -v node &> /dev/null; then
 fi
 
 if ! command -v ffmpeg &> /dev/null; then
-    echo -e "${RED}Error: ffmpeg is not installed${NC}"
-    echo -e "${YELLOW}Install it with: brew install ffmpeg (macOS) or sudo apt install ffmpeg (Linux)${NC}"
-    exit 1
+    echo -e "${RED}ffmpeg is not installed${NC}"
+    echo -e "${YELLOW}Installation commands:${NC}"
+    echo "  macOS: brew install ffmpeg"
+    echo "  Linux: sudo apt install ffmpeg"
+    echo ""
+    if prompt_yes_no "Have you installed ffmpeg and want to continue?"; then
+        if ! command -v ffmpeg &> /dev/null; then
+            echo -e "${RED}ffmpeg still not found. Please install it and try again.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}Cannot continue without ffmpeg${NC}"
+        exit 1
+    fi
 fi
 
 # Check if virtual environment exists
 if [ ! -d "backend/venv" ]; then
-    echo -e "${RED}Error: Virtual environment not found${NC}"
-    echo -e "${YELLOW}Run the following commands first:${NC}"
-    echo "  cd backend"
-    echo "  python3 -m venv venv"
-    echo "  source venv/bin/activate"
-    echo "  pip install -r requirements.txt"
-    exit 1
+    echo -e "${RED}Virtual environment not found${NC}"
+    if prompt_yes_no "Would you like to set up the Python virtual environment now?"; then
+        echo -e "${YELLOW}Setting up virtual environment...${NC}"
+        cd backend
+        python3 -m venv venv || { echo -e "${RED}Failed to create virtual environment${NC}"; exit 1; }
+        source venv/bin/activate
+        echo -e "${YELLOW}Installing Python dependencies...${NC}"
+        pip install -r requirements.txt || { echo -e "${RED}Failed to install dependencies${NC}"; exit 1; }
+        cd ..
+        echo -e "${GREEN}✓ Virtual environment set up successfully${NC}"
+    else
+        echo -e "${RED}Cannot continue without virtual environment${NC}"
+        exit 1
+    fi
 fi
 
 # Check if frontend dependencies are installed
 if [ ! -d "frontend/node_modules" ]; then
-    echo -e "${RED}Error: Frontend dependencies not installed${NC}"
-    echo -e "${YELLOW}Run: cd frontend && npm install${NC}"
-    exit 1
+    echo -e "${RED}Frontend dependencies not installed${NC}"
+    if prompt_yes_no "Would you like to install frontend dependencies now?"; then
+        echo -e "${YELLOW}Installing frontend dependencies...${NC}"
+        cd frontend
+        npm install || { echo -e "${RED}Failed to install frontend dependencies${NC}"; exit 1; }
+        cd ..
+        echo -e "${GREEN}✓ Frontend dependencies installed successfully${NC}"
+    else
+        echo -e "${RED}Cannot continue without frontend dependencies${NC}"
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}✓ All prerequisites met${NC}"

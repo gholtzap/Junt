@@ -5,7 +5,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { TrackProgress } from './TrackProgress';
 import { AudioPlayer } from './AudioPlayer';
 
-export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgradeClick }) {
+export function ProcessingView({ jobId, albumData, durationType, onReset }) {
   const [status, setStatus] = useState(null);
   const [isComplete, setIsComplete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -134,7 +134,7 @@ export function ProcessingView({ jobId, albumData, durationType, onReset, onUpgr
           </div>
 
           <div className="mb-8">
-            <AudioPlayer audioUrl={api.getDownloadUrl(jobId)} onUpgradeClick={onUpgradeClick} />
+            <AudioPlayer audioUrl={api.getDownloadUrl(jobId)} />
           </div>
 
           {fullyComplete ? (

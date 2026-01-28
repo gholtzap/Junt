@@ -72,7 +72,7 @@ class JobManager:
         track: object,
         track_index: int,
         album: AlbumDetail,
-        clip_duration: float
+        clip_percentage: float
     ) -> Tuple[int, Optional[str], Optional[str]]:
         """
         Process a single track: download, analyze, extract, and normalize.
@@ -98,6 +98,9 @@ class JobManager:
                 track.title,
                 output_filename
             )
+
+            # Calculate clip duration for this specific track
+            clip_duration = self.processor.calculate_clip_duration(track.duration, clip_percentage)
 
             # Analyze for peak energy
             track_status.status = "analyzing"
@@ -175,8 +178,8 @@ class JobManager:
                 "album": album.dict()
             })
 
-            # Get clip duration settings
-            clip_duration, crossfade_duration = self.processor.get_clip_duration(duration)
+            # Get clip percentage settings
+            clip_percentage, crossfade_duration = self.processor.get_clip_percentage(duration)
 
             # Progressive montage settings
             PARTIAL_READY_THRESHOLD = 3  # Start playback after this many tracks
@@ -199,7 +202,7 @@ class JobManager:
                         track,
                         batch_start + i,
                         album,
-                        clip_duration
+                        clip_percentage
                     )
                     for i, track in enumerate(batch_tracks)
                 ]

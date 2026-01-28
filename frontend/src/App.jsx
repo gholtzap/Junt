@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Login } from './components/Login';
-import { Register } from './components/Register';
 import { AlbumSearch } from './components/AlbumSearch';
 import { AlbumConfirm } from './components/AlbumConfirm';
 import { DurationSelect } from './components/DurationSelect';
@@ -12,29 +9,13 @@ import { LibraryPlayer } from './components/LibraryPlayer';
 import LiquidEther from './components/LiquidEther';
 import { api } from './lib/api';
 
-function AppContent() {
-  const { user, loading, logout } = useAuth();
-  const [authScreen, setAuthScreen] = useState('login'); // login, register
-  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player, auth
+function App() {
+  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player
   const [selectedMbid, setSelectedMbid] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [durationType, setDurationType] = useState(null);
   const [selectedLibraryMontage, setSelectedLibraryMontage] = useState(null);
-
-  const isAnonymous = !user;
-
-  if (loading) {
-    return <LoadingScreen message="Loading..." />;
-  }
-
-  // Show auth screen if explicitly navigated to it
-  if (screen === 'auth') {
-    if (authScreen === 'login') {
-      return <Login onSwitchToRegister={() => setAuthScreen('register')} onBack={() => setScreen('search')} onSuccess={() => setScreen('search')} />;
-    }
-    return <Register onSwitchToLogin={() => setAuthScreen('login')} onBack={() => setScreen('search')} onSuccess={() => setScreen('search')} />;
-  }
 
   const handleSelectAlbum = async (mbid) => {
     setSelectedMbid(mbid);
@@ -60,25 +41,9 @@ function AppContent() {
       setScreen('processing');
     } catch (error) {
       console.error('Failed to create montage:', error);
-
-      // Handle rate limit for anonymous users
-      if (error.status === 429) {
-        if (confirm(error.message + '\n\nWould you like to sign up now?')) {
-          setAuthScreen('register');
-          setScreen('auth');
-        } else {
-          setScreen('search');
-        }
-      } else {
-        alert('Failed to start montage creation. Please try again.');
-        setScreen('duration'); // Go back to duration selection on error
-      }
+      alert('Failed to start montage creation. Please try again.');
+      setScreen('duration'); // Go back to duration selection on error
     }
-  };
-
-  const handleUpgradeClick = () => {
-    setAuthScreen('register');
-    setScreen('auth');
   };
 
   const handleReset = () => {
@@ -96,6 +61,11 @@ function AppContent() {
   const handleSelectLibraryMontage = (montage) => {
     setSelectedLibraryMontage(montage);
     setScreen('library-player');
+  };
+
+  const handleAutoPlay = (montage) => {
+    setSelectedLibraryMontage(montage);
+    // Stay on library-player screen
   };
 
   const handleBackToLibrary = () => {
@@ -125,48 +95,14 @@ function AppContent() {
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
       />
 
-      {/* User info and action buttons */}
+      {/* Library button */}
       <div className="fixed top-4 right-4 flex items-center gap-4" style={{ zIndex: 100 }}>
-        {isAnonymous ? (
-          <>
-            <button
-              onClick={() => {
-                setAuthScreen('login');
-                setScreen('auth');
-              }}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => {
-                setAuthScreen('register');
-                setScreen('auth');
-              }}
-              className="px-4 py-2 accent-bg text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Sign Up Free
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="text-gray-400 text-sm">
-              Welcome, {user.username}
-            </div>
-            <button
-              onClick={handleGoToLibrary}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
-            >
-              My Library
-            </button>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
-            >
-              Logout
-            </button>
-          </>
-        )}
+        <button
+          onClick={handleGoToLibrary}
+          className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
+        >
+          My Library
+        </button>
       </div>
 
       {/* Main content */}
@@ -201,34 +137,26 @@ function AppContent() {
             albumData={albumData}
             durationType={durationType}
             onReset={handleReset}
-            onUpgradeClick={handleUpgradeClick}
           />
         )}
 
-        {screen === 'library' && !isAnonymous && (
+        {screen === 'library' && (
           <Library
             onSelectMontage={handleSelectLibraryMontage}
             onBack={() => setScreen('search')}
           />
         )}
 
-        {screen === 'library-player' && selectedLibraryMontage && !isAnonymous && (
+        {screen === 'library-player' && selectedLibraryMontage && (
           <LibraryPlayer
             montage={selectedLibraryMontage}
             onBack={handleBackToLibrary}
             onDelete={handleLibraryMontageDeleted}
+            onAutoPlay={handleAutoPlay}
           />
         )}
       </div>
     </div>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }
 

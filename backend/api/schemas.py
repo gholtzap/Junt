@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import List, Optional
 from enum import Enum
 
@@ -43,9 +43,6 @@ class MontageCreateRequest(BaseModel):
 
 class MontageCreateResponse(BaseModel):
     job_id: str
-    session_id: Optional[str] = None
-    is_anonymous: Optional[bool] = False
-    usage_info: Optional[dict] = None
 
 
 class TrackStatus(BaseModel):
@@ -69,29 +66,6 @@ class JobStatus(BaseModel):
 class WebSocketMessage(BaseModel):
     type: str  # "progress", "track_complete", "error", "done"
     data: dict
-
-
-# Auth schemas
-class UserCreate(BaseModel):
-    email: EmailStr
-    username: str
-    password: str
-
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserResponse(BaseModel):
-    id: str
-    email: str
-    username: str
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
 
 
 # Library schemas

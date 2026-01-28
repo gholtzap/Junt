@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import album, montage, websocket, auth, library
-from config.database import connect_to_mongo, close_mongo_connection
+from api.routes import album, montage, websocket, library
 import os
 import logging
-from contextlib import asynccontextmanager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -12,19 +10,11 @@ logging.basicConfig(
 )
 
 os.makedirs("temp", exist_ok=True)
-os.makedirs("montages", exist_ok=True)
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await connect_to_mongo()
-    yield
-    await close_mongo_connection()
 
 app = FastAPI(
     title="Junt API",
     description="Find your favorite track without hitting skip. The fastest way to digest any new release.",
-    version="1.0.0",
-    lifespan=lifespan
+    version="1.0.0"
 )
 
 origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
@@ -39,7 +29,6 @@ app.add_middleware(
 
 
 # Include routers
-app.include_router(auth.router)
 app.include_router(album.router)
 app.include_router(montage.router)
 app.include_router(websocket.router)

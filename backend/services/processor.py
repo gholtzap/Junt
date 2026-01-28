@@ -9,17 +9,39 @@ from api.schemas import DurationType
 
 
 class ProcessorService:
-    # Duration presets (clip_duration, crossfade_duration)
+    # Duration presets (percentage, crossfade_duration)
+    # Percentage is applied to each track's duration
     DURATION_PRESETS = {
-        DurationType.SHORT: (6.0, 0.3),
-        DurationType.MEDIUM: (11.0, 0.5),
-        DurationType.LONG: (21.0, 0.75),
+        DurationType.SHORT: (0.10, 0.3),   # 10% of track
+        DurationType.MEDIUM: (0.20, 0.5),  # 20% of track
+        DurationType.LONG: (0.30, 0.75),   # 30% of track
     }
 
     @staticmethod
-    def get_clip_duration(duration_type: DurationType) -> Tuple[float, float]:
-        """Get clip duration and crossfade for a duration type."""
+    def get_clip_percentage(duration_type: DurationType) -> Tuple[float, float]:
+        """Get clip percentage and crossfade for a duration type."""
         return ProcessorService.DURATION_PRESETS[duration_type]
+
+    @staticmethod
+    def calculate_clip_duration(track_duration: int, percentage: float, fallback_duration: float = 180.0) -> float:
+        """
+        Calculate clip duration based on track duration and percentage.
+
+        Args:
+            track_duration: Track duration in seconds (can be None)
+            percentage: Percentage of track to use (0.0 to 1.0)
+            fallback_duration: Default duration if track duration is unavailable
+
+        Returns:
+            Clip duration in seconds
+        """
+        if track_duration and track_duration > 0:
+            clip_duration = track_duration * percentage
+            # Ensure minimum of 3 seconds and maximum of 60 seconds per clip
+            return max(3.0, min(60.0, clip_duration))
+        else:
+            # Fallback if track duration is unavailable (assume ~3 minute track)
+            return fallback_duration * percentage
 
     @staticmethod
     async def extract_clip(

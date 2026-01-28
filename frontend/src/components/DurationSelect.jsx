@@ -5,27 +5,30 @@ export function DurationSelect({ onSelect, trackCount, onBack }) {
     {
       id: 'short',
       name: 'Short',
-      clipDuration: 6,
+      percentage: 10,
       crossfade: 0.3,
       description: 'Quick preview',
     },
     {
       id: 'medium',
       name: 'Medium',
-      clipDuration: 11,
+      percentage: 20,
       crossfade: 0.5,
       description: 'Balanced length',
     },
     {
       id: 'long',
       name: 'Long',
-      clipDuration: 21,
+      percentage: 30,
       crossfade: 0.75,
       description: 'Extended preview',
     },
   ];
 
-  const calculateTotal = (clipDuration, crossfade) => {
+  // Estimate total time assuming average track is 3 minutes (180 seconds)
+  const calculateEstimate = (percentage, crossfade) => {
+    const avgTrackDuration = 180; // 3 minutes in seconds
+    const clipDuration = avgTrackDuration * (percentage / 100);
     const total = trackCount * clipDuration - (trackCount - 1) * crossfade;
     const minutes = Math.floor(total / 60);
     const seconds = Math.floor(total % 60);
@@ -52,7 +55,7 @@ export function DurationSelect({ onSelect, trackCount, onBack }) {
             Choose Duration
           </h2>
           <p className="text-gray-400 text-lg">
-            Select the clip length for your junt
+            Select what percentage of each track to include
           </p>
         </div>
 
@@ -74,22 +77,26 @@ export function DurationSelect({ onSelect, trackCount, onBack }) {
               <div className="text-gray-400 mb-4">{preset.description}</div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Clip length:</span>
-                  <span className="font-mono">{preset.clipDuration}s</span>
+                  <span className="text-gray-500">Per track:</span>
+                  <span className="font-mono font-semibold">{preset.percentage}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Crossfade:</span>
                   <span className="font-mono">{preset.crossfade}s</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-white/5">
-                  <span className="text-gray-500">Total time:</span>
+                  <span className="text-gray-500">Est. total:</span>
                   <span className="font-mono font-semibold">
-                    {calculateTotal(preset.clipDuration, preset.crossfade)}
+                    {calculateEstimate(preset.percentage, preset.crossfade)}
                   </span>
                 </div>
               </div>
             </motion.button>
           ))}
+        </div>
+
+        <div className="mt-8 text-center text-sm text-gray-500">
+          Each track contributes the selected percentage of its duration to your junt
         </div>
       </motion.div>
     </div>
