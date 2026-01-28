@@ -45,15 +45,37 @@ class MetadataService:
                 if mbid:
                     cover_url = f"https://coverartarchive.org/release/{mbid}/front-500"
 
-                albums.append(AlbumSearchResult(
-                    mbid=mbid,
-                    title=release.get('title', 'Unknown Album'),
-                    artist=release.get('artist-credit-phrase', 'Unknown Artist'),
-                    year=year,
-                    cover_url=cover_url
-                ))
+                # Extract relevance score from MusicBrainz
+                score = int(release.get('ext:score', 0))
 
-            return albums
+                albums.append({
+                    'result': AlbumSearchResult(
+                        mbid=mbid,
+                        title=release.get('title', 'Unknown Album'),
+                        artist=release.get('artist-credit-phrase', 'Unknown Artist'),
+                        year=year,
+                        cover_url=cover_url
+                    ),
+                    'score': score
+                })
+
+            # Sort by relevance score (highest first)
+            albums.sort(key=lambda x: x['score'], reverse=True)
+
+            # Remove duplicates: keep only the first (highest scored) instance of each title+artist combination
+            seen = set()
+            unique_albums = []
+            for album in albums:
+                # Create a normalized key for deduplication (lowercase, stripped)
+                key = (
+                    album['result'].title.lower().strip(),
+                    album['result'].artist.lower().strip()
+                )
+                if key not in seen:
+                    seen.add(key)
+                    unique_albums.append(album['result'])
+
+            return unique_albums
         except Exception as e:
             print(f"Error searching albums: {e}")
             return []
