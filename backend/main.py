@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import album, montage, websocket, library
+from api.routes import album, montage, websocket, library, playlist
 import os
 import logging
 
@@ -33,6 +33,7 @@ app.include_router(album.router)
 app.include_router(montage.router)
 app.include_router(websocket.router)
 app.include_router(library.router)
+app.include_router(playlist.router)
 
 
 @app.get("/")

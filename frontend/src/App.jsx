@@ -6,16 +6,20 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { ProcessingView } from './components/ProcessingView';
 import { Library } from './components/Library';
 import { LibraryPlayer } from './components/LibraryPlayer';
+import { PlaylistList } from './components/PlaylistList';
+import { PlaylistView } from './components/PlaylistView';
+import { PlaylistPlayer } from './components/PlaylistPlayer';
 import LiquidEther from './components/LiquidEther';
 import { api } from './lib/api';
 
 function App() {
-  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player
+  const [screen, setScreen] = useState('search'); // search, confirm, duration, loading, processing, library, library-player, playlist-list, playlist-view, playlist-player
   const [selectedMbid, setSelectedMbid] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [durationType, setDurationType] = useState(null);
   const [selectedLibraryMontage, setSelectedLibraryMontage] = useState(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   const handleSelectAlbum = async (mbid) => {
     setSelectedMbid(mbid);
@@ -78,6 +82,29 @@ function App() {
     setScreen('library');
   };
 
+  const handleGoToPlaylists = () => {
+    setScreen('playlist-list');
+  };
+
+  const handleSelectPlaylist = (playlist) => {
+    setSelectedPlaylist(playlist);
+    setScreen('playlist-view');
+  };
+
+  const handlePlayPlaylist = (playlist) => {
+    setSelectedPlaylist(playlist);
+    setScreen('playlist-player');
+  };
+
+  const handleBackToPlaylistList = () => {
+    setSelectedPlaylist(null);
+    setScreen('playlist-list');
+  };
+
+  const handleBackToPlaylistView = () => {
+    setScreen('playlist-view');
+  };
+
   return (
     <div className="min-h-screen">
       {/* Animated background */}
@@ -95,13 +122,19 @@ function App() {
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
       />
 
-      {/* Library button */}
-      <div className="fixed top-4 right-4 flex items-center gap-4" style={{ zIndex: 100 }}>
+      {/* Navigation buttons */}
+      <div className="fixed top-4 right-4 flex items-center gap-3" style={{ zIndex: 100 }}>
         <button
           onClick={handleGoToLibrary}
           className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
         >
           My Library
+        </button>
+        <button
+          onClick={handleGoToPlaylists}
+          className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
+        >
+          Playlists
         </button>
       </div>
 
@@ -137,6 +170,7 @@ function App() {
             albumData={albumData}
             durationType={durationType}
             onReset={handleReset}
+            onGoToLibrary={handleGoToLibrary}
           />
         )}
 
@@ -153,6 +187,28 @@ function App() {
             onBack={handleBackToLibrary}
             onDelete={handleLibraryMontageDeleted}
             onAutoPlay={handleAutoPlay}
+          />
+        )}
+
+        {screen === 'playlist-list' && (
+          <PlaylistList
+            onSelectPlaylist={handleSelectPlaylist}
+            onBack={() => setScreen('search')}
+          />
+        )}
+
+        {screen === 'playlist-view' && selectedPlaylist && (
+          <PlaylistView
+            playlistId={selectedPlaylist.id}
+            onBack={handleBackToPlaylistList}
+            onPlay={handlePlayPlaylist}
+          />
+        )}
+
+        {screen === 'playlist-player' && selectedPlaylist && (
+          <PlaylistPlayer
+            playlist={selectedPlaylist}
+            onBack={handleBackToPlaylistView}
           />
         )}
       </div>

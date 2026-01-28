@@ -107,6 +107,7 @@ class MetadataService:
             # Extract tracks
             tracks = []
             medium_list = release.get('medium-list', [])
+            track_number = 1  # Absolute track number across all mediums
 
             for medium in medium_list:
                 for track_data in medium.get('track-list', []):
@@ -121,10 +122,11 @@ class MetadataService:
                             pass
 
                     tracks.append(Track(
-                        number=int(track_data.get('position', 0)),
+                        number=track_number,
                         title=recording.get('title', 'Unknown Track'),
                         duration=duration
                     ))
+                    track_number += 1
 
             return AlbumDetail(
                 mbid=mbid,

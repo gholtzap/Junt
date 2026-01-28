@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../lib/api';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
 
 export function Library({ onSelectMontage, onBack }) {
   const [montages, setMontages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
+  const [selectedJuntId, setSelectedJuntId] = useState(null);
 
   useEffect(() => {
     loadLibrary();
@@ -39,6 +42,12 @@ export function Library({ onSelectMontage, onBack }) {
       console.error('Failed to delete montage:', err);
       alert('Failed to delete junt');
     }
+  };
+
+  const handleAddToPlaylist = (montageId, e) => {
+    e.stopPropagation();
+    setSelectedJuntId(montageId);
+    setShowAddToPlaylistModal(true);
   };
 
   if (loading) {
@@ -134,7 +143,26 @@ export function Library({ onSelectMontage, onBack }) {
                     </div>
                   </div>
 
-                  {/* Delete button */}
+                  {/* Action buttons */}
+                  <button
+                    onClick={(e) => handleAddToPlaylist(montage.id, e)}
+                    className="absolute top-2 left-2 w-8 h-8 rounded-full bg-purple-500/60 backdrop-blur-md hover:bg-purple-500/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    title="Add to Playlist"
+                  >
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                  </button>
                   <button
                     onClick={(e) => handleDelete(montage.id, e)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500/60 backdrop-blur-md hover:bg-red-500/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -169,6 +197,16 @@ export function Library({ onSelectMontage, onBack }) {
           </div>
         )}
       </div>
+
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={showAddToPlaylistModal}
+        onClose={() => {
+          setShowAddToPlaylistModal(false);
+          setSelectedJuntId(null);
+        }}
+        juntId={selectedJuntId}
+      />
     </div>
   );
 }

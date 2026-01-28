@@ -47,7 +47,7 @@ export const api = {
     return `${API_BASE}/montage/${jobId}/download`;
   },
 
-  async saveMontage(jobId, album, durationType) {
+  async saveMontage(jobId, album, durationType, tracks) {
     const response = await fetch(`${API_BASE}/library/save`, {
       method: 'POST',
       headers: {
@@ -57,6 +57,7 @@ export const api = {
         job_id: jobId,
         album: album,
         duration_type: durationType,
+        tracks: tracks,
       }),
     });
     return handleResponse(response);
@@ -71,10 +72,99 @@ export const api = {
     return `${API_BASE}/library/${montageId}/stream`;
   },
 
+  getTrackStreamUrl(montageId, trackNumber) {
+    return `${API_BASE}/library/${montageId}/tracks/${trackNumber}/stream`;
+  },
+
   async deleteMontage(montageId) {
     const response = await fetch(`${API_BASE}/library/${montageId}`, {
       method: 'DELETE',
     });
+    return handleResponse(response);
+  },
+
+  // Playlist methods
+  async getPlaylists() {
+    const response = await fetch(`${API_BASE}/playlists`);
+    return handleResponse(response);
+  },
+
+  async createPlaylist(name, description) {
+    const response = await fetch(`${API_BASE}/playlists`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, description }),
+    });
+    return handleResponse(response);
+  },
+
+  async getPlaylist(playlistId) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}`);
+    return handleResponse(response);
+  },
+
+  async updatePlaylist(playlistId, name, description) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, description }),
+    });
+    return handleResponse(response);
+  },
+
+  async deletePlaylist(playlistId) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}`, {
+      method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
+
+  async addTrackToPlaylist(playlistId, juntId, trackNumber) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}/items/track`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ junt_id: juntId, track_number: trackNumber }),
+    });
+    return handleResponse(response);
+  },
+
+  async addJuntToPlaylist(playlistId, juntId) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}/items/junt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ junt_id: juntId }),
+    });
+    return handleResponse(response);
+  },
+
+  async removeItemFromPlaylist(playlistId, itemId) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}/items/${itemId}`, {
+      method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
+
+  async reorderPlaylistItems(playlistId, itemIds) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}/items/reorder`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ item_ids: itemIds }),
+    });
+    return handleResponse(response);
+  },
+
+  async getPlaylistTracks(playlistId) {
+    const response = await fetch(`${API_BASE}/playlists/${playlistId}/tracks`);
     return handleResponse(response);
   },
 };

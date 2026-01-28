@@ -1,5 +1,8 @@
 import asyncio
 import uuid
+import shutil
+import os
+from pathlib import Path
 from typing import Dict, Optional, Callable, Tuple
 from datetime import datetime
 from api.schemas import JobStatus, TrackStatus, DurationType, AlbumDetail
@@ -179,13 +182,10 @@ class JobManager:
             })
 
             # Get clip percentage settings
-            clip_percentage, crossfade_duration = self.processor.get_clip_percentage(duration)
+            clip_percentage, _ = self.processor.get_clip_percentage(duration)
 
-            # Progressive montage settings
-            PARTIAL_READY_THRESHOLD = 3  # Start playback after this many tracks
+            # Processing settings
             BATCH_SIZE = 3  # Process this many tracks in parallel
-            output_path = f"temp/{job_id}_montage.mp3"
-            partial_ready_sent = False
 
             # Track clips by number to maintain order
             clips_by_track_number = {}
@@ -238,57 +238,47 @@ class JobManager:
                             "progress": job.progress
                         })
 
-                # After each batch, update progressive montage with all completed clips
-                if clips_by_track_number:
-                    # Sort clips by track number to maintain album order
-                    sorted_track_numbers = sorted(clips_by_track_number.keys())
-                    sorted_clip_paths = [clips_by_track_number[num] for num in sorted_track_numbers]
-
-                    # Progressive montage: Create/update montage after threshold reached
-                    if len(sorted_clip_paths) >= PARTIAL_READY_THRESHOLD:
-                        await self.processor.create_progressive_montage(
-                            sorted_clip_paths,
-                            output_path,
-                            crossfade_duration
-                        )
-
-                        # Notify frontend that partial montage is ready for playback
-                        if not partial_ready_sent:
-                            job.file_path = output_path
-                            await self._notify_callbacks(job_id, "partial_ready", {
-                                "file_path": output_path,
-                                "tracks_ready": len(sorted_clip_paths),
-                                "total_tracks": job.total_tracks,
-                                "message": f"First {len(sorted_clip_paths)} tracks ready! More tracks are being added..."
-                            })
-                            partial_ready_sent = True
-                            print(f"Partial montage ready: {len(sorted_clip_paths)}/{job.total_tracks} tracks")
-
             # Check if we have any clips
             if not clips_by_track_number:
                 raise Exception("All tracks failed to process")
 
-            # Get final sorted clip paths
+            # Create permanent directory for this junt
+            from services.library import get_montages_dir
+            junt_dir = get_montages_dir() / job_id
+            junt_dir.mkdir(exist_ok=True)
+
+            # Move clips to permanent storage and build track data
+            tracks_data = []
             sorted_track_numbers = sorted(clips_by_track_number.keys())
-            clip_paths = [clips_by_track_number[num] for num in sorted_track_numbers]
 
-            # Create final montage (if we haven't created one yet, or to ensure final version)
-            await self.processor.create_montage(
-                clip_paths,
-                output_path,
-                crossfade_duration
-            )
+            for track_number in sorted_track_numbers:
+                temp_clip_path = clips_by_track_number[track_number]
 
-            # Cleanup individual clips
-            self.processor.cleanup_clips(clip_paths)
+                # Create permanent filename: track_01.mp3, track_02.mp3, etc.
+                permanent_filename = f"track_{track_number:02d}.mp3"
+                permanent_path = junt_dir / permanent_filename
+
+                # Move clip to permanent storage
+                shutil.move(temp_clip_path, permanent_path)
+
+                # Find track info
+                track_info = next((t for t in album.tracks if t.number == track_number), None)
+
+                # Build track data
+                tracks_data.append({
+                    "number": track_number,
+                    "title": track_info.title if track_info else f"Track {track_number}",
+                    "duration": track_info.duration if track_info else 0,
+                    "file_path": str(permanent_path)
+                })
 
             # Mark job as complete
             job.status = "completed"
             job.progress = 1.0
-            job.file_path = output_path
 
             await self._notify_callbacks(job_id, "done", {
-                "file_path": output_path,
+                "junt_id": job_id,
+                "tracks": tracks_data,
                 "total_tracks": job.completed_tracks,
                 "errors": job.errors
             })

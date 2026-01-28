@@ -13,6 +13,7 @@ class Track(BaseModel):
     number: int
     title: str
     duration: Optional[int] = None  # Duration in seconds
+    file_path: Optional[str] = None  # Path to individual track file
 
 
 class AlbumSearchResult(BaseModel):
@@ -79,10 +80,67 @@ class SavedMontage(BaseModel):
     id: str
     album: AlbumDetail
     duration_type: DurationType
-    track_count: int
+    tracks: List[Track]  # Individual tracks with file paths
     created_at: str
 
 
 class LibraryResponse(BaseModel):
     montages: List[SavedMontage]
+    total: int
+
+
+# Playlist schemas
+class PlaylistItemBase(BaseModel):
+    """Base class for playlist items."""
+    id: str
+    type: str  # "track" or "junt"
+    junt_id: str
+    added_at: str
+
+
+class PlaylistTrackItem(PlaylistItemBase):
+    """Playlist item referencing a specific track within a junt."""
+    type: str = "track"
+    track_number: int
+
+
+class PlaylistJuntItem(PlaylistItemBase):
+    """Playlist item referencing an entire junt."""
+    type: str = "junt"
+
+
+class Playlist(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    items: List[PlaylistItemBase]
+    created_at: str
+    updated_at: str
+
+
+class PlaylistCreateRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class PlaylistUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class AddTrackToPlaylistRequest(BaseModel):
+    junt_id: str
+    track_number: int
+
+
+class AddJuntToPlaylistRequest(BaseModel):
+    junt_id: str
+
+
+class ReorderPlaylistRequest(BaseModel):
+    item_ids: List[str]  # New order of item IDs
+
+
+class PlaylistListResponse(BaseModel):
+    playlists: List[Playlist]
     total: int

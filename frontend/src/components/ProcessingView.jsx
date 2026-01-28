@@ -3,15 +3,13 @@ import { motion } from 'framer-motion';
 import { api } from '../lib/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { TrackProgress } from './TrackProgress';
-import { AudioPlayer } from './AudioPlayer';
 
-export function ProcessingView({ jobId, albumData, durationType, onReset }) {
+export function ProcessingView({ jobId, albumData, durationType, onReset, onGoToLibrary }) {
   const [status, setStatus] = useState(null);
   const [isComplete, setIsComplete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isPartialReady, setIsPartialReady] = useState(false);
-  const [partialMessage, setPartialMessage] = useState('');
+  const [tracksData, setTracksData] = useState([]);
 
   const handleMessage = useCallback((message) => {
     console.log('WebSocket message:', message);
@@ -30,13 +28,12 @@ export function ProcessingView({ jobId, albumData, durationType, onReset }) {
           setIsComplete(true);
         }
       });
-    } else if (message.type === 'partial_ready') {
-      // Partial montage is ready - user can start listening!
-      setIsPartialReady(true);
-      setPartialMessage(message.data.message || 'First few tracks ready! More are being added...');
-      api.getJobStatus(jobId).then(setStatus);
     } else if (message.type === 'done') {
       setIsComplete(true);
+      // Capture tracks data from the done message
+      if (message.data.tracks) {
+        setTracksData(message.data.tracks);
+      }
       api.getJobStatus(jobId).then(setStatus);
     }
   }, [jobId]);
@@ -48,7 +45,25 @@ export function ProcessingView({ jobId, albumData, durationType, onReset }) {
 
     setIsSaving(true);
     try {
-      await api.saveMontage(jobId, albumData, durationType);
+      // If tracksData is empty, reconstruct it from successful track statuses
+      let tracks = tracksData;
+      if (!tracks || tracks.length === 0) {
+        // Build tracks array from successful track statuses
+        tracks = status.track_statuses
+          .filter(ts => ts.status === 'complete')
+          .map(ts => {
+            // Find the track info from albumData
+            const trackInfo = albumData.tracks.find(t => t.number === ts.track_number);
+            return {
+              number: ts.track_number,
+              title: ts.track_title,
+              duration: trackInfo?.duration || 0
+              // file_path will be constructed by the backend
+            };
+          });
+      }
+
+      await api.saveMontage(jobId, albumData, durationType, tracks);
       setIsSaved(true);
     } catch (error) {
       console.error('Failed to save montage:', error);
@@ -84,10 +99,10 @@ export function ProcessingView({ jobId, albumData, durationType, onReset }) {
     );
   }
 
-  // Show player early if partial montage is ready (even if not fully complete)
-  if ((isPartialReady || isComplete) && status?.file_path) {
-    const fullyComplete = isComplete && status.status === 'completed';
-    const stillProcessing = !fullyComplete && isPartialReady;
+  // Show completion UI when job is done
+  if (isComplete && status?.status === 'completed') {
+    // Allow saving if we have tracks data OR if at least one track completed successfully
+    const hasValidTracks = (tracksData && tracksData.length > 0) || (status.completed_tracks > 0);
 
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -108,73 +123,67 @@ export function ProcessingView({ jobId, albumData, durationType, onReset }) {
               />
             )}
             <h2 className="text-5xl font-bold mb-4 tracking-tight">
-              {fullyComplete ? 'Junt Ready' : 'Preview Ready'}
+              Junt Ready
             </h2>
             <p className="text-gray-400 text-lg mb-2">
               {albumData?.title} by {albumData?.artist}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mb-4">
               {status.completed_tracks} / {status.total_tracks} tracks processed
             </p>
 
-            {stillProcessing && (
+            {isSaved ? (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4 p-3 bg-blue-500/10 backdrop-blur-md border border-blue-500/20 rounded-lg"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-4 p-3 bg-green-500/10 backdrop-blur-md border border-green-500/20 rounded-lg inline-block"
               >
-                <div className="flex items-center justify-center gap-2 text-blue-400">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium">
-                    {partialMessage || 'Adding more tracks...'}
-                  </span>
+                <div className="flex items-center gap-2 text-green-400">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium">Saved to Library!</span>
                 </div>
               </motion.div>
+            ) : hasValidTracks && (
+              <p className="text-sm text-green-400 mb-4">
+                {(tracksData && tracksData.length > 0) ? tracksData.length : status.completed_tracks} track{((tracksData && tracksData.length > 0) ? tracksData.length : status.completed_tracks) !== 1 ? 's' : ''} ready to save
+              </p>
             )}
           </div>
 
-          <div className="mb-8">
-            <AudioPlayer audioUrl={api.getDownloadUrl(jobId)} />
-          </div>
-
-          {fullyComplete ? (
-            <div className="flex gap-4 justify-center">
-              <motion.a
+          <div className="flex gap-4 justify-center">
+            {!isSaved ? (
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                href={api.getDownloadUrl(jobId)}
-                download
-                className="px-8 py-4 rounded-lg accent-bg font-semibold text-lg hover:opacity-90 transition-opacity"
-              >
-                Download MP3
-              </motion.a>
-              <motion.button
-                whileHover={{ scale: isSaved ? 1 : 1.05 }}
-                whileTap={{ scale: isSaved ? 1 : 0.95 }}
                 onClick={handleSave}
-                disabled={isSaving || isSaved}
-                className={`px-8 py-4 rounded-lg font-semibold text-lg transition-all ${
-                  isSaved
-                    ? 'bg-green-500/20 backdrop-blur-md border border-green-500/50 text-green-400 cursor-default'
-                    : 'bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20'
-                }`}
+                disabled={isSaving || !hasValidTracks}
+                className="px-8 py-4 rounded-lg font-semibold text-lg accent-bg hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
-                {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save to Library'}
+                {isSaving ? 'Saving...' : 'Save to Library'}
               </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onReset}
-                className="px-8 py-4 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
-              >
-                Create Another Junt
-              </motion.button>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-400">
-              You can start listening now. Full junt will be available when all tracks complete.
-            </div>
-          )}
+            ) : (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onGoToLibrary}
+                  className="px-8 py-4 rounded-lg accent-bg font-semibold text-lg hover:opacity-90 transition-opacity"
+                >
+                  Go to Library
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onReset}
+                  className="px-8 py-4 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
+                >
+                  Create Another Junt
+                </motion.button>
+              </>
+            )}
+          </div>
 
           {status.errors && status.errors.length > 0 && (
             <motion.div
@@ -193,14 +202,14 @@ export function ProcessingView({ jobId, albumData, durationType, onReset }) {
             </motion.div>
           )}
 
-          {stillProcessing && status.track_statuses && (
+          {status.track_statuses && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="mt-8"
             >
               <div className="text-sm font-semibold text-gray-400 mb-4">
-                Track Progress
+                Track Summary
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {status.track_statuses.map((trackStatus) => (
