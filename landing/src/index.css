@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent-h: 270;
+  --accent-s: 85%;
+  --accent-l: 65%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Alan Sans", "Zain", sans-serif;
+  font-optical-sizing: auto;
+  background: linear-gradient(to bottom, #0a0a0a, #1a0a1a);
+  color: #ffffff;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 20, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.accent-color {
+  color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+}
+
+.accent-bg {
+  background-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+}
+
+.accent-border {
+  border-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+}
+
+.accent-glow {
+  box-shadow: 0 0 80px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.3);
+}
+
+.accent-glow-strong {
+  box-shadow: 0 0 120px hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.5);
+}
+
+* {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
+}
+
+button {
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

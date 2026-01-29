@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../lib/api';
+import { BrowseJuntsModal } from './BrowseJuntsModal';
 
 export function PlaylistView({ playlistId, onBack, onPlay }) {
   const [playlist, setPlaylist] = useState(null);
@@ -8,6 +9,7 @@ export function PlaylistView({ playlistId, onBack, onPlay }) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
 
   useEffect(() => {
     loadPlaylist();
@@ -142,6 +144,14 @@ export function PlaylistView({ playlistId, onBack, onPlay }) {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowBrowseModal(true)}
+                  className="px-4 py-3 rounded-lg bg-purple-500/20 backdrop-blur-md border border-purple-500/50 hover:border-purple-400 text-purple-300 transition-colors font-semibold"
+                >
+                  + Add Junt
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setEditing(true)}
                   className="px-4 py-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors"
                 >
@@ -172,9 +182,17 @@ export function PlaylistView({ playlistId, onBack, onPlay }) {
         {!playlist.items || playlist.items.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-400 mb-4">This playlist is empty</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mb-6">
               Add tracks or junts from your library
             </p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowBrowseModal(true)}
+              className="px-6 py-3 rounded-lg bg-purple-500/20 backdrop-blur-md border border-purple-500/50 hover:border-purple-400 text-purple-300 transition-colors font-semibold"
+            >
+              + Add Your First Junt
+            </motion.button>
           </div>
         ) : (
           <div className="space-y-2">
@@ -221,6 +239,14 @@ export function PlaylistView({ playlistId, onBack, onPlay }) {
           </div>
         )}
       </div>
+
+      {/* Browse Junts Modal */}
+      <BrowseJuntsModal
+        isOpen={showBrowseModal}
+        onClose={() => setShowBrowseModal(false)}
+        playlistId={playlistId}
+        onAdded={loadPlaylist}
+      />
     </div>
   );
 }
