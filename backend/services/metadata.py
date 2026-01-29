@@ -56,24 +56,61 @@ class MetadataService:
                         year=year,
                         cover_url=cover_url
                     ),
-                    'score': score
+                    'score': score,
+                    'status': release.get('status', ''),
+                    'country': release.get('country', ''),
+                    'date': release.get('date', '')
                 })
 
-            # Sort by relevance score (highest first)
-            albums.sort(key=lambda x: x['score'], reverse=True)
-
-            # Remove duplicates: keep only the first (highest scored) instance of each title+artist combination
-            seen = set()
-            unique_albums = []
+            # Remove duplicates: keep the best version of each title+artist combination
+            # Group by normalized title+artist
+            grouped = {}
             for album in albums:
-                # Create a normalized key for deduplication (lowercase, stripped)
                 key = (
                     album['result'].title.lower().strip(),
                     album['result'].artist.lower().strip()
                 )
-                if key not in seen:
-                    seen.add(key)
-                    unique_albums.append(album['result'])
+                if key not in grouped:
+                    grouped[key] = []
+                grouped[key].append(album)
+
+            # For each group, pick the best release using MusicBrainz metadata
+            unique_albums = []
+            for key, duplicates in grouped.items():
+                # Rank releases by quality indicators
+                def rank_release(album):
+                    score = 0
+
+                    # MusicBrainz relevance score (0-100)
+                    score += album['score']
+
+                    # Prefer Official releases over Promotions/Bootlegs
+                    if album['status'] == 'Official':
+                        score += 50
+                    elif album['status'] == 'Promotion':
+                        score -= 20
+                    elif album['status'] == 'Bootleg':
+                        score -= 100
+
+                    # Prefer US/UK releases (most common/accessible)
+                    if album['country'] in ['US', 'GB', 'XW']:  # XW = Worldwide
+                        score += 30
+
+                    # Prefer earlier releases (originals over reissues)
+                    # Penalize newer releases slightly
+                    if album['date']:
+                        try:
+                            year = int(album['date'][:4])
+                            current_year = 2026
+                            age = current_year - year
+                            score += age * 2  # Small bonus for older releases
+                        except (ValueError, IndexError):
+                            pass
+
+                    return score
+
+                best = max(duplicates, key=rank_release)
+                unique_albums.append(best['result'])
 
             return unique_albums
         except Exception as e:
