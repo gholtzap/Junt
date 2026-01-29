@@ -122,21 +122,23 @@ function App() {
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
       />
 
-      {/* Navigation buttons */}
-      <div className="fixed top-4 right-4 flex items-center gap-3" style={{ zIndex: 100 }}>
-        <button
-          onClick={handleGoToLibrary}
-          className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
-        >
-          My Library
-        </button>
-        <button
-          onClick={handleGoToPlaylists}
-          className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
-        >
-          Playlists
-        </button>
-      </div>
+      {/* Navigation buttons - only show on search screen */}
+      {screen === 'search' && (
+        <div className="fixed top-4 right-4 flex items-center gap-3" style={{ zIndex: 100 }}>
+          <button
+            onClick={handleGoToLibrary}
+            className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
+          >
+            My Library
+          </button>
+          <button
+            onClick={handleGoToPlaylists}
+            className="px-4 py-2 bg-dark-surface backdrop-blur-md text-gray-400 hover:text-white border border-white/10 rounded-lg hover:border-white/30 transition-colors"
+          >
+            Playlists
+          </button>
+        </div>
+      )}
 
       {/* Main content */}
       <div style={{ position: 'relative', zIndex: 10 }}>
