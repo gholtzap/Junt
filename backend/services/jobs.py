@@ -293,6 +293,15 @@ class JobManager:
 
             print(f"Job {job_id} failed: {e}")
 
+            temp_dir = Path("temp")
+            for pattern in [f"{job_id}_track_*.mp3", f"{job_id}_clip_*.mp3"]:
+                for temp_file in temp_dir.glob(pattern):
+                    try:
+                        temp_file.unlink()
+                        print(f"Cleaned up temp file after job failure: {temp_file.name}")
+                    except Exception as cleanup_error:
+                        print(f"Error cleaning up {temp_file.name}: {cleanup_error}")
+
 
 # Global job manager instance
 job_manager = JobManager()

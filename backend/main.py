@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import album, montage, websocket, library, playlist
+from api.routes import album, montage, websocket, library, playlist, cleanup
+from services.cleanup import cleanup_service
+from config.settings import settings
 import os
 import logging
 
@@ -9,7 +11,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-os.makedirs("temp", exist_ok=True)
+os.makedirs(settings.TEMP_DIR, exist_ok=True)
 
 app = FastAPI(
     title="Junt API",
@@ -17,7 +19,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background services on application startup."""
+    if settings.CLEANUP_ENABLED:
+        cleanup_service.start_periodic_cleanup(interval_minutes=settings.CLEANUP_INTERVAL_MINUTES)
+        logging.info(f"Cleanup service started: interval={settings.CLEANUP_INTERVAL_MINUTES}min, max_age={settings.CLEANUP_MAX_AGE_HOURS}h")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background services on application shutdown."""
+    if settings.CLEANUP_ENABLED:
+        await cleanup_service.stop_periodic_cleanup()
+
+origins = settings.ALLOWED_ORIGINS.split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +51,7 @@ app.include_router(montage.router)
 app.include_router(websocket.router)
 app.include_router(library.router)
 app.include_router(playlist.router)
+app.include_router(cleanup.router)
 
 
 @app.get("/")
