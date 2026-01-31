@@ -98,7 +98,7 @@ async def save_montage(job_id: str, album: dict, duration_type: str, tracks: Lis
     return montage_doc
 
 
-async def get_user_montages(skip: int = 0, limit: int = 50) -> dict:
+async def get_user_montages(page: int = 1, page_size: int = 50, skip: int = None, limit: int = None) -> dict:
     """Get paginated list of saved montages."""
     library = read_library()
     montages = library.get("montages", [])
@@ -106,13 +106,32 @@ async def get_user_montages(skip: int = 0, limit: int = 50) -> dict:
     # Sort by created_at descending
     montages.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
-    # Paginate
     total = len(montages)
-    paginated_montages = montages[skip:skip + limit]
+
+    if skip is not None and limit is not None:
+        actual_skip = skip
+        actual_limit = limit
+        current_page = (skip // limit) + 1 if limit > 0 else 1
+        current_page_size = limit
+    else:
+        current_page = max(1, page)
+        current_page_size = max(1, page_size)
+        actual_skip = (current_page - 1) * current_page_size
+        actual_limit = current_page_size
+
+    paginated_montages = montages[actual_skip:actual_skip + actual_limit]
+    total_pages = (total + current_page_size - 1) // current_page_size if current_page_size > 0 else 0
 
     return {
         "montages": paginated_montages,
-        "total": total
+        "pagination": {
+            "total": total,
+            "page": current_page,
+            "page_size": current_page_size,
+            "total_pages": total_pages,
+            "has_next": current_page < total_pages,
+            "has_previous": current_page > 1
+        }
     }
 
 

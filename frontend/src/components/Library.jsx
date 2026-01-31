@@ -5,20 +5,23 @@ import { AddToPlaylistModal } from './AddToPlaylistModal';
 
 export function Library({ onSelectMontage, onBack }) {
   const [montages, setMontages] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false);
   const [selectedJuntId, setSelectedJuntId] = useState(null);
 
   useEffect(() => {
-    loadLibrary();
-  }, []);
+    loadLibrary(currentPage);
+  }, [currentPage]);
 
-  const loadLibrary = async () => {
+  const loadLibrary = async (page = 1) => {
     try {
       setLoading(true);
-      const data = await api.getLibrary();
-      setMontages(data.montages);
+      const data = await api.getLibrary(page, 20);
+      setMontages(data.items);
+      setPagination(data.pagination);
       setError(null);
     } catch (err) {
       console.error('Failed to load library:', err);
@@ -194,6 +197,28 @@ export function Library({ onSelectMontage, onBack }) {
                 </p>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {pagination && pagination.total_pages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={!pagination.has_previous}
+              className="px-4 py-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-400">
+              Page {pagination.page} of {pagination.total_pages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={!pagination.has_next}
+              className="px-4 py-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

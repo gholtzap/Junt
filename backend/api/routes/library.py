@@ -36,20 +36,22 @@ async def save_montage(request: dict):
 
 @router.get("", response_model=LibraryResponse)
 async def get_library(
-    skip: int = 0,
-    limit: int = 50
+    page: int = Query(1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(50, ge=1, le=100, description="Items per page"),
+    skip: int = Query(None, ge=0, description="Number of items to skip (alternative to page)"),
+    limit: int = Query(None, ge=1, le=100, description="Number of items to return (alternative to page_size)")
 ):
-    """Get saved montages."""
+    """Get saved montages with pagination."""
     try:
         result = await library.get_user_montages(
+            page=page,
+            page_size=page_size,
             skip=skip,
             limit=limit
         )
 
-        # Format montages for response
         montages = []
         for montage in result["montages"]:
-            # Get tracks data
             tracks_data = montage.get("tracks", [])
 
             montages.append(SavedMontage(
@@ -60,7 +62,7 @@ async def get_library(
                     "artist": montage["album"]["artist"],
                     "year": montage["album"].get("year"),
                     "cover_url": montage["album"].get("cover_url"),
-                    "tracks": []  # Empty for album info, tracks are in montage.tracks
+                    "tracks": []
                 },
                 duration_type=montage["duration_type"],
                 tracks=tracks_data,
@@ -68,8 +70,8 @@ async def get_library(
             ))
 
         return LibraryResponse(
-            montages=montages,
-            total=result["total"]
+            items=montages,
+            pagination=result["pagination"]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get library: {str(e)}")

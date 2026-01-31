@@ -63,8 +63,8 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getLibrary() {
-    const response = await fetch(`${API_BASE}/library`);
+  async getLibrary(page = 1, pageSize = 50) {
+    const response = await fetch(`${API_BASE}/library?page=${page}&page_size=${pageSize}`);
     return handleResponse(response);
   },
 
@@ -83,9 +83,8 @@ export const api = {
     return handleResponse(response);
   },
 
-  // Playlist methods
-  async getPlaylists() {
-    const response = await fetch(`${API_BASE}/playlists`);
+  async getPlaylists(page = 1, pageSize = 50) {
+    const response = await fetch(`${API_BASE}/playlists?page=${page}&page_size=${pageSize}`);
     return handleResponse(response);
   },
 

@@ -1,8 +1,4 @@
 #!/bin/bash
-
-# Album Previewer Full Stack - Startup Script
-# This script starts both the backend and frontend servers
-
 set -e
 
 # Colors for output
@@ -30,7 +26,7 @@ prompt_yes_no() {
 }
 
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  Album Previewer Full Stack - Starting Services${NC}"
+echo -e "${BLUE}  Junt - Starting Services${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════${NC}"
 echo ""
 

@@ -1,6 +1,22 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Generic, TypeVar
 from enum import Enum
+
+T = TypeVar('T')
+
+
+class PaginationMetadata(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    has_next: bool
+    has_previous: bool
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: List[T]
+    pagination: PaginationMetadata
 
 
 class DurationType(str, Enum):
@@ -84,9 +100,8 @@ class SavedMontage(BaseModel):
     created_at: str
 
 
-class LibraryResponse(BaseModel):
-    montages: List[SavedMontage]
-    total: int
+class LibraryResponse(PaginatedResponse[SavedMontage]):
+    pass
 
 
 # Playlist schemas
@@ -141,6 +156,5 @@ class ReorderPlaylistRequest(BaseModel):
     item_ids: List[str]  # New order of item IDs
 
 
-class PlaylistListResponse(BaseModel):
-    playlists: List[Playlist]
-    total: int
+class PlaylistListResponse(PaginatedResponse[Playlist]):
+    pass

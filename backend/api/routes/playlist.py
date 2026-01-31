@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import List
 from api.schemas import (
     Playlist,
@@ -15,13 +15,23 @@ router = APIRouter(prefix="/api/playlists", tags=["playlists"])
 
 
 @router.get("", response_model=PlaylistListResponse)
-async def list_playlists():
-    """Get all playlists."""
+async def list_playlists(
+    page: int = Query(1, ge=1, description="Page number (1-indexed)"),
+    page_size: int = Query(50, ge=1, le=100, description="Items per page"),
+    skip: int = Query(None, ge=0, description="Number of items to skip (alternative to page)"),
+    limit: int = Query(None, ge=1, le=100, description="Number of items to return (alternative to page_size)")
+):
+    """Get playlists with pagination."""
     try:
-        playlists = playlist.get_playlists()
+        result = playlist.get_playlists(
+            page=page,
+            page_size=page_size,
+            skip=skip,
+            limit=limit
+        )
         return PlaylistListResponse(
-            playlists=playlists,
-            total=len(playlists)
+            items=result["playlists"],
+            pagination=result["pagination"]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get playlists: {str(e)}")

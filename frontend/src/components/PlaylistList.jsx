@@ -4,6 +4,8 @@ import { api } from '../lib/api';
 
 export function PlaylistList({ onSelectPlaylist, onBack }) {
   const [playlists, setPlaylists] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
@@ -11,14 +13,15 @@ export function PlaylistList({ onSelectPlaylist, onBack }) {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    loadPlaylists();
-  }, []);
+    loadPlaylists(currentPage);
+  }, [currentPage]);
 
-  const loadPlaylists = async () => {
+  const loadPlaylists = async (page = 1) => {
     try {
       setLoading(true);
-      const data = await api.getPlaylists();
-      setPlaylists(data.playlists || []);
+      const data = await api.getPlaylists(page, 20);
+      setPlaylists(data.items || []);
+      setPagination(data.pagination);
     } catch (error) {
       console.error('Failed to load playlists:', error);
     } finally {
@@ -36,7 +39,8 @@ export function PlaylistList({ onSelectPlaylist, onBack }) {
       setNewPlaylistName('');
       setNewPlaylistDescription('');
       setShowCreateModal(false);
-      await loadPlaylists();
+      setCurrentPage(1);
+      await loadPlaylists(1);
     } catch (error) {
       console.error('Failed to create playlist:', error);
       alert('Failed to create playlist');
@@ -61,7 +65,7 @@ export function PlaylistList({ onSelectPlaylist, onBack }) {
           <div>
             <h1 className="text-4xl font-bold mb-2">Playlists</h1>
             <p className="text-gray-400">
-              {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
+              {pagination ? `${pagination.total} total` : `${playlists.length}`} {(pagination?.total === 1 || playlists.length === 1) ? 'playlist' : 'playlists'}
             </p>
           </div>
           <div className="flex gap-3">
@@ -118,6 +122,28 @@ export function PlaylistList({ onSelectPlaylist, onBack }) {
                 </div>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {pagination && pagination.total_pages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={!pagination.has_previous}
+              className="px-4 py-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-400">
+              Page {pagination.page} of {pagination.total_pages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={!pagination.has_next}
+              className="px-4 py-2 rounded-lg bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

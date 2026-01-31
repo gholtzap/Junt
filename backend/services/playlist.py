@@ -4,10 +4,40 @@ from typing import List, Dict, Optional
 from services.library import read_library, write_library, get_montage
 
 
-def get_playlists() -> List[Dict]:
-    """Get all playlists."""
+def get_playlists(page: int = 1, page_size: int = 50, skip: int = None, limit: int = None) -> dict:
+    """Get paginated list of playlists."""
     library = read_library()
-    return library.get("playlists", [])
+    playlists = library.get("playlists", [])
+
+    playlists.sort(key=lambda x: x.get("updated_at", x.get("created_at", "")), reverse=True)
+
+    total = len(playlists)
+
+    if skip is not None and limit is not None:
+        actual_skip = skip
+        actual_limit = limit
+        current_page = (skip // limit) + 1 if limit > 0 else 1
+        current_page_size = limit
+    else:
+        current_page = max(1, page)
+        current_page_size = max(1, page_size)
+        actual_skip = (current_page - 1) * current_page_size
+        actual_limit = current_page_size
+
+    paginated_playlists = playlists[actual_skip:actual_skip + actual_limit]
+    total_pages = (total + current_page_size - 1) // current_page_size if current_page_size > 0 else 0
+
+    return {
+        "playlists": paginated_playlists,
+        "pagination": {
+            "total": total,
+            "page": current_page,
+            "page_size": current_page_size,
+            "total_pages": total_pages,
+            "has_next": current_page < total_pages,
+            "has_previous": current_page > 1
+        }
+    }
 
 
 async def create_playlist(name: str, description: Optional[str] = None) -> Dict:
